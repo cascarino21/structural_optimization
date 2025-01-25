@@ -5,7 +5,7 @@ from typing import List
 # Parameters
 population_size = 10
 chromosome_length = 2
-generations = 10
+generations = 50
 mutation_rate = 0.3
 mutation_count = 0
 applied_moment = 140
@@ -47,10 +47,33 @@ def calc_capacity(genome: Genome) -> List:
 #     fitness = min_area + max_area - area
 #     return fitness
 
-def fitness_function_penalty(utilization, min_area, max_area, area) -> float:
+def fitness_function(min_area, max_area, area) -> float:
     fitness = min_area + max_area - area
  
     return fitness
+
+# def get_max_fitnesses(fitnesses, utilizations) -> float: 
+#     max_fittest_all = max(fitnesses)
+#     max_fittest_feas = 0
+#     for fit, util in zip(fitnesses, utilizations):
+#         if util <= 1:
+#             max_fittest_feas = fit 
+    
+#     return max_fittest_all, max_fittest_feas
+
+def get_min_areas(areas, utilizations) -> float: 
+    min_area_all = min(areas)
+    min_area_feas = max(areas)
+    for area, util in zip(areas, utilizations):
+        if util <= 1 & area < min_area_feas:
+            min_area_feas = area 
+    
+    return min_area_all, min_area_feas
+
+def penalised_objective(area, utilization, min_area_all, min_area_feas) -> float:
+    if utilization <=1:
+        return area
+    return area + (min_area_feas-min_area_all)*(utilization)
 
 # Selection
 def tournament_selection(population, fitnesses, k=3):
@@ -58,7 +81,7 @@ def tournament_selection(population, fitnesses, k=3):
     return max(selected_indices, key=lambda i: fitnesses[i])
 
 # Crossover
-def single_point_crossover(parent1, parent2):
+def single_point_crossover(parent1, parent2) -> Genome:
     point = random.randint(1, len(parent1) - 1)
     child1 = parent1[:point] + parent2[point:]
     child2 = parent2[:point] + parent1[point:]
@@ -93,21 +116,31 @@ for generation in range(generations):
         capacities.append(item[3])
         utilizations.append(applied_moment_input/item[3])
 
-    for i, area in enumerate(areas):
-        if utilizations[i] > 1:
-            areas[i] = area* (utilizations[i]**2)
+    print(areas)
+
+    # Penalizing objectives
+    min_area_all, min_area_feas = get_min_areas(areas=areas, utilizations=utilizations)
+    areas = [penalised_objective(area, util, min_area_all=min_area_all, min_area_feas=min_area_feas) for area, util in zip(areas, utilizations)]
+    print(areas)
+    # # Applying penalty (simple method)
+    # for i, area in enumerate(areas):
+    #     if utilizations[i] > 1:
+    #         areas[i] = area* (utilizations[i]**2)
 
     max_area = max(areas)
     min_area = min(areas)
-    fitnesses = [fitness_function_penalty(utilization, min_area, max_area, area) for utilization, area in zip(utilizations ,areas)]
-    
+    fitnesses = [fitness_function(min_area, max_area, area) for utilization, area in zip(utilizations ,areas)]
+    # max_fitness_all, max_fitness_feas = get_max_fitnesses(fitnesses, utilizations)
     sortedPopulation = [genome for _,genome in sorted(zip(fitnesses,population), reverse=True)]
     sortedUtilization = [utilization for _,utilization in sorted(zip(fitnesses,utilizations), reverse=True)]
     sortedAreas = [area for _,area in sorted(zip(fitnesses,areas), reverse=True)]
     
     # Debugging code ----------------------
-    # for pop, util, area, fit in zip(population, utilizations, areas, fitnesses ):
-    #     print(f"Population: {pop}, Utilization: {round(util,2)}, area: {round(area,2)}, fitness: {round(fit,2)}") 
+
+    for pop, util, area, fit, diam, spac in zip(population, utilizations, areas, fitnesses, diams, spacings):
+        print(f"Population: {pop} == Ø{diam}-{spac}, UC: {round(util,2)}, area: {round(area,2)}, fitness: {round(fit,2)}") 
+    print(f"Min Area: {min_area_all} & Min feasible area: {min_area_feas}")
+
     # --------------------------------------
 
     new_population = sortedPopulation[0:1]
