@@ -167,6 +167,6 @@ for generation in range(generations):
 
     # Print best fitness in this generation
     best_fitness = max(fitnesses)
-    print(f"Generation {generation}, with: Ø{Diams[sortedPopulation[0][0]]}-{Spacing[sortedPopulation[0][1]]}, Height: {round(sortedHeights[0],2)} Reinf. area: {round(sortedAreas[0],2)}, Cost: {round(sortedCosts[0],2)}, UC: {round(sortedUtilization[0],2)}, Fitness: {best_fitness}")
+    print(f"Generation {generation}, with: Ø{Diams[sortedPopulation[0][0]]}-{Spacing[sortedPopulation[0][1]]}, Height: {round(sortedHeights[0],2)} Reinf. area: {round(sortedAreas[0],2)}, Cost: {round(sortedCosts[0],2)}, UC: {round(sortedUtilization[0],2)}, Fitness: {round(best_fitness,2)}")
 
 
